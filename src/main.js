@@ -8,16 +8,14 @@ if (process.env.NODE_ENV !== "production") {
 	});
 }
 
-let mainWindow;
-
-app.on("ready", ()=> {
+app.on("ready", () => {	
 	mainWindow = new BrowserWindow({});
 	mainWindow.loadURL(url.format({
-		pathname: path.join(__dirname, "views/index.html"),
+		pathname: path.join(__dirname, "index.html"),
 		protocol: "file",
 		slashes: true,
 	}));
 
 	const mainMenu = Menu.buildFromTemplate([]);
 	Menu.setApplicationMenu(mainMenu);
-});
+})
