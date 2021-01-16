@@ -6,6 +6,49 @@ canvas.height = window.innerHeight;
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false; // evitar la interpolación linear
 
+class Coin {
+	constructor(x, y, xscale, yscale, ctx) {
+		this.x = x;
+		this.y = y;
+
+		this.xscale = xscale;
+		this.yscale = yscale;
+
+		this.sprite = new Image();
+		this.sprite.src = "./sprites/coin.png";
+
+		this.spriteWidth = 60;
+		this.spriteHeight = 15;
+
+		this.spriteFrameCount = 4;
+		this.spriteFrame = 0;
+
+		this.spriteCols = 4;
+		this.spriteRows = 1;
+
+		this.srcX;
+		this.srcY;
+
+		this.width = (this.spriteWidth/this.spriteCols);
+		this.height = (this.spriteHeight/this.spriteRows);
+	}
+
+	draw() {
+		this.updateFrame();
+		ctx.drawImage(this.sprite, this.srcX, this.srcY, this.width, this.height, this.x, this.y, this.width*this.xscale, this.height*this.yscale);
+	}
+
+	updateFrame() {
+		this.spriteFrame = ++this.spriteFrame % this.spriteCols;
+		this.srcX = this.spriteFrame * this.width;
+		this.srcY = 0;
+	}
+
+	init() {
+		this.draw();
+	}
+}
+
 class Block { // objeto bloque
 	constructor(x, y, ctx) {
 		this.x = x;
@@ -67,6 +110,8 @@ class Player { // objeto jugador
 
 		this.colx = false;
 		this.coly = false;
+
+		this.coins = 0;
 	}
 
 	draw() {
@@ -99,19 +144,19 @@ class Player { // objeto jugador
 	control() { // controles, velocidad y gravedad
 		if (this.keys["a"]) this.vx = this.approach(this.vx, -this.vel, 2); // izquierda
 		if (this.keys["d"]) this.vx = this.approach(this.vx, this.vel, 2); // derecha
-		if (this.keys["w"] && this.collision(this.x, this.y+1)) this.vy = -25; // saltar si solo se ecuentra en el suelo
+		if (this.keys["w"] && this.collision(this.x, this.y+1, blocks)) this.vy = -30; // saltar si solo se ecuentra en el suelo
 
 		if (!this.keys["a"]&&!this.keys["d"]) this.vx = this.approach(this.vx, 0, 2); // ninguna tecla
 
-		if (this.collision(this.x + this.vx, this.y)) { // colisión perfecta en X
+		if (this.collision(this.x + this.vx, this.y, blocks)) { // colisión perfecta en X
 			this.x = Math.floor(this.x);
-			while(!this.collision(this.x + this.sign(this.vx), this.y)) this.x += this.sign(this.vx);
+			while(!this.collision(this.x + this.sign(this.vx), this.y, blocks)) this.x += this.sign(this.vx);
 			this.vx = 0;
 		} else this.x += this.vx;
 
-		if (this.collision(this.x, this.y + this.vy)) { // colision perfecta en Y
+		if (this.collision(this.x, this.y + this.vy, blocks)) { // colision perfecta en Y
 			this.y = Math.floor(this.y);
-			while(!this.collision(this.x, this.y + this.sign(this.vy))) this.y += this.sign(this.vy);
+			while(!this.collision(this.x, this.y + this.sign(this.vy), blocks)) this.y += this.sign(this.vy);
 			this.vy = 0;
 		} else this.y += this.vy;
 
@@ -120,6 +165,13 @@ class Player { // objeto jugador
 
 		//gravedad
 		this.vy = this.approach(this.vy, 40, 5);
+
+		//tomar monedas
+		let coin = this.collisionId(this.x, this.y, coins);
+		if (coin != -1) {
+			coins.splice(coin, 1);
+			this.coins++;
+		}
 	}
 
 	approach(val, max, shift) { // metodo para controlar la velocidad maxima, minima, aceleración y fricción
@@ -129,14 +181,24 @@ class Player { // objeto jugador
 			return Math.max(val - shift, max);
 	}
 
-	collision(x, y) { // detectar colisiones con los bloques
-		for(let i = 0; i < blocks.length; i++) {
-			if (x < blocks[i].x + blocks[i].spriteWidth && 
-				(x + (this.width*this.xscale)) > blocks[i].x &&
-				y < blocks[i].y + blocks[i].spriteHeight &&
-				(y + (this.height*this.yscale)) > blocks[i].y) return true
+	collision(x, y, obj) { // detectar colisiones
+		for(let i = 0; i < obj.length; i++) {
+			if (x < obj[i].x + obj[i].spriteWidth && 
+				(x + (this.width*this.xscale)) > obj[i].x &&
+				y < obj[i].y + obj[i].spriteHeight &&
+				(y + (this.height*this.yscale)) > obj[i].y) return true;
 		}
 		return false;
+	}
+
+	collisionId(x, y, obj) { // detectar colisiones y devolver su id
+		for(let i = 0; i < obj.length; i++) {
+			if (x < obj[i].x + obj[i].spriteWidth && 
+				(x + (this.width*this.xscale)) > obj[i].x &&
+				y < obj[i].y + obj[i].spriteHeight &&
+				(y + (this.height*this.yscale)) > obj[i].y) return i;
+		}
+		return -1;
 	}
 
 	sign(x) { // retornar 1, 0 o -1 
@@ -153,18 +215,24 @@ class Player { // objeto jugador
 
 // objetos en el room
 
-var player = new Player(0, 0, 3, 3, ctx);
+var player = new Player(0, 0, 2, 2, ctx);
 
 var blocks = Array();
 
-for (var i = 0; i < Math.floor(innerWidth/32); i++) {
-	blocks.push(new Block(i*32, 200, ctx));
+for (var i = 0; i < Math.floor(innerWidth/32)+1; i++) {
+	blocks.push(new Block(i*32, 400, ctx));
 }
-blocks.push(new Block(256, 168, ctx));
-blocks.push(new Block(288, 136, ctx));
-blocks.push(new Block(320, 104, ctx));
-blocks.push(new Block(352, 136, ctx));
-blocks.push(new Block(384, 168, ctx));
+blocks.push(new Block(256, 368, ctx));
+blocks.push(new Block(288, 336, ctx));
+blocks.push(new Block(320, 304, ctx));
+blocks.push(new Block(352, 336, ctx));
+blocks.push(new Block(384, 368, ctx));
+
+var coins = Array();
+coins.push(new Coin(100, 360, 2, 2, ctx));
+coins.push(new Coin(420, 360, 2, 2, ctx));
+coins.push(new Coin(320, 260, 2, 2, ctx));
+coins.push(new Coin(320, 150, 2, 2, ctx));
 
 // bucle inical
 
@@ -173,9 +241,12 @@ function mainLoop () {
   	ctx.clearRect(0, 0, innerWidth, innerHeight); // borrar el canvas
   	player.init(); // actualizar al jugador por frame
 
-  	for (var i = 0; i < blocks.length; i++) { // dibujar todos los bloques
-  		blocks[i].init(); // inicializarlos
-  	}
+  	blocks.map((i)=> i.init()); // inicializar bloques
+  	coins.map((i) => i.init()); // inicializar monedas
+
+  	ctx.font = "30px Comic Sans MS";
+	ctx.fillStyle = "white";
+  	ctx.fillText(`Score : ${player.coins}`, 10,30);
 }
 
 // controles del teclado
