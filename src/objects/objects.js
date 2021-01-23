@@ -67,26 +67,13 @@ class Player { // objeto jugador
 		this.x = x;
 		this.y = y;
 
-		this.xscale = xscale;
-		this.yscale = yscale;
-
-		this.sprite = new Image();
-		this.sprite.src = "./sprites/playerIdleRight.png";
-
-		this.spriteWidth = 96;
-		this.spriteHeight = 24;
-
 		this.spriteFrameCount = 4;
 		this.spriteFrame = 0;
 
-		this.spriteCols = 4;
-		this.spriteRows = 1;
+		this.getImage();
 
-		this.srcX;
-		this.srcY;
-
-		this.width = (this.spriteWidth/this.spriteCols);
-		this.height = (this.spriteHeight/this.spriteRows);
+		this.xscale = xscale;
+		this.yscale = yscale;
 
 		this.facing = 1;
 
@@ -197,6 +184,25 @@ class Player { // objeto jugador
 		if (x < 0) return -1;
 		else if (x > 0) return 1;
 		else if (x === 0) return 0;
+	}
+
+	getImage() {
+		this.sprite = new Image();
+		this.sprite.src = "./sprites/playerIdleRight.png";
+
+		this.sprite.onload = ()=> {
+			this.spriteWidth = this.sprite.width//96;
+			this.spriteHeight = this.sprite.height//24;
+
+			this.spriteCols = 4;
+			this.spriteRows = 1;
+
+			this.srcX;
+			this.srcY;
+
+			this.width = (this.spriteWidth/this.spriteCols);
+			this.height = (this.spriteHeight/this.spriteRows);
+		}
 	}
 
 	init() { // loop
