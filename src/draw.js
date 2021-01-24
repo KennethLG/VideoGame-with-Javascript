@@ -1,7 +1,7 @@
 const canvas = document.querySelector("canvas"); // definir el canvas y sus dimensiones
 
-canvas.width = window.innerWidth*.75;
-canvas.height = window.innerHeight*.75;
+canvas.width = window.innerWidth*.5;
+canvas.height = window.innerHeight*.5;
 
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false; // evitar la interpolación linear
@@ -28,17 +28,15 @@ coins.push(new Coin(320, 150, 2, 2, ctx));
 
 // bucle inical
 
-const setCamera = () => {
+const setCamera = (xTo, yTo) => {
 	ctx.setTransform(1,0,0,1,0,0);
-  	let xTo = -(-(canvas.width/2) + player.x);
-  	let yTo = -(-(canvas.height/2) + player.y);
   	ctx.translate(
   		Math.min(0, Math.max(xTo, -canvas.width)),
   		Math.min(0, Math.max(yTo, -canvas.height))
   	);
 }
 
-const drawUI = () => {
+const drawUI = (xTo, yTo) => {
 	ctx.font = "30px Comic Sans MS";
 	ctx.fillStyle = "white";
 
@@ -52,6 +50,12 @@ const mainLoop = () => {
 
   	blocks.map((i)=> i.init()); // inicializar bloques
   	coins.map((i) => i.init()); // inicializar monedas
+
+  	let xTo = -(-(canvas.width/2) + player.x);
+  	let yTo = -(-(canvas.height/2) + player.y);
+
+  	setCamera(xTo, yTo);
+  	drawUI(xTo, yTo);
 }
 
 // controles del teclado
