@@ -1,7 +1,7 @@
 const canvas = document.querySelector("canvas"); // definir el canvas y sus dimensiones
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width = window.innerWidth*.75;
+canvas.height = window.innerHeight*.75;
 
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false; // evitar la interpolación linear
@@ -11,7 +11,7 @@ var player = new Player(0, 0, 2, 2, ctx);
 
 var blocks = Array();
 
-for (var i = 0; i < Math.floor(innerWidth/32)+1; i++) {
+for (var i = 0; i < 2000; i++) {
 	blocks.push(new Block(i*32, 400, ctx));
 }
 blocks.push(new Block(256, 368, ctx));
@@ -28,17 +28,30 @@ coins.push(new Coin(320, 150, 2, 2, ctx));
 
 // bucle inical
 
-function mainLoop () {
+const setCamera = () => {
+	ctx.setTransform(1,0,0,1,0,0);
+  	let xTo = -(-(canvas.width/2) + player.x);
+  	let yTo = -(-(canvas.height/2) + player.y);
+  	ctx.translate(
+  		Math.min(0, Math.max(xTo, -canvas.width)),
+  		Math.min(0, Math.max(yTo, -canvas.height))
+  	);
+}
+
+const drawUI = () => {
+	ctx.font = "30px Comic Sans MS";
+	ctx.fillStyle = "white";
+
+  	ctx.fillText(`Score : ${player.coins}`, Math.max(64, Math.min(-xTo + 64, canvas.width+64)), Math.max(64, Math.min(-yTo + 64, canvas.height+64)));
+}
+
+const mainLoop = () => {
 	ctx.globalCompositeOperation = 'destination-over';
   	ctx.clearRect(0, 0, innerWidth, innerHeight); // borrar el canvas
   	player.init(); // actualizar al jugador por frame
 
   	blocks.map((i)=> i.init()); // inicializar bloques
   	coins.map((i) => i.init()); // inicializar monedas
-
-  	ctx.font = "30px Comic Sans MS";
-	ctx.fillStyle = "white";
-  	ctx.fillText(`Score : ${player.coins}`, 10,30);
 }
 
 // controles del teclado
@@ -56,9 +69,11 @@ window.addEventListener("click", (e)=> {
 
 // inicializar el bucle a 60 fps
 
-setInterval(()=> {
-	mainLoop();
-}, 60);
+setTimeout(()=> {
+	setInterval(()=> {
+		mainLoop();
+	}, 60);
+}, 1000);
 
 // other functions
 
